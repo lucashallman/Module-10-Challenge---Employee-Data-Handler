@@ -1,0 +1,24 @@
+{
+  "name": "miniprojectmod10",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc && node main.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "type": "module",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "inquirer": "^12.1.0",
+    "pg": "^8.13.1",
+    "postgres": "^3.4.5",
+    "typescipt": "^1.0.0",
+    "typescript": "^5.6.3"
+  }
+}
