@@ -7,7 +7,8 @@ import { QueryResult } from 'pg';
 const { Pool } = pg;
 
 async function updateEmp(emp_id: string) {
-    const result = await pool.query('SELECT * FROM employees WHERE id = $1'[parseInt(emp_id)]);
+    const result = pool.query('SELECT * FROM employees WHERE id = $1', [emp_id], (err => console.log(err)));
+    const roles = await pool.query('SELECT title FROM roles')
     console.table(result);
     inquirer
         .prompt([
@@ -15,11 +16,11 @@ async function updateEmp(emp_id: string) {
                 type: 'list',
                 message: 'What would you like to update?',
                 choices: ['Name', 'Role'],
-                name: 'a'
+                name: 'updateSelect'
             }
         ])
         .then(res => {
-            if (res.a === 'Name') {
+            if (res.updateSelect === 'Name') {
                 //Get new name info and update existing info
                 inquirer
                     .prompt([{
@@ -28,27 +29,58 @@ async function updateEmp(emp_id: string) {
                         name: 'name'
                     }])
                     .then(res => {
-                        pool.query('UPDATE employees SET name = $1 WHERE id = $2'[res.name, emp_id])
+                        pool.query('UPDATE employees SET name = $1 WHERE id = $2', [res.name, emp_id], (err: Error, result: QueryResult) => {
+                            if (err) {
+                                console.log(err);
+                                return;
+                            } else {
+                                console.log(colors.green('Success!'));
+                                console.table(result.rows);
+                            };
+
+                        })
                     })
             } else {
                 //Update role where id = selected employee
-                const roles = pool.query('SELECT * FROM roles')
                 inquirer
                     .prompt([{
                         type: 'list',
                         message: 'Select New Role.',
-                        choices: roles
+                        choices: roles.rows,
+                        name: 'newRole'
                     }])
+                    .then(res => {
+                        pool.query('UPDATE employees SET role = $1 WHERE id = $2', [res.newRole, emp_id], (err: Error, result: QueryResult) => {
+                            if (err) {
+                                console.log(err);
+                                return;
+                            } else {
+                                console.log(colors.green('Success!'));
+                                console.table(result.rows);
+                            };
+
+                        })
+                    })
             }
         })
-    const newResult = pool.query('SELECT * FROM employees WHERE id = $1'[parseInt(emp_id)]);
+    const newResult = pool.query('SELECT * FROM employees WHERE id = $1', [emp_id], (err: Error, result: QueryResult) => {
+        if (err) {
+            console.log(err);
+            return;
+        } else {
+            console.log(colors.green('Success!'));
+            console.table(result.rows);
+        };
+
+    });
     console.log(colors.green('Information Updated.'));
     console.table(newResult);
 }
 
 async function insertData(table: string) {
     if (table === 'employees') {
-        const departments = (await pool.query('SELECT * FROM departments')).rows;
+        const departments = await pool.query('SELECT * FROM departments');
+        const roles = await pool.query('SELECT * FROM roles');
         inquirer
             .prompt([
                 {
@@ -60,22 +92,33 @@ async function insertData(table: string) {
                     type: 'list',
                     message: 'Select Employee Department',
                     name: 'department',
-                    choices: departments
+                    choices: departments.rows
                 },
+                {
+                    type: 'list',
+                    message: 'Select Employee Role',
+                    name: 'role',
+                    choices: roles.rows
+                }
             ])
+            .then(result => {
+                pool.query('INSERT INTO employees (name, dept_id) VALUES ($1, $2)', [result.name, result.department.id])
+            })
+    } else if (table === 'departments') {
+
     }
 }
 
-function menuHandler(response) {
+function menuHandler(response: any) {
     if (response.action === 'View Departments') {
-        console.table(fetchTableData('departments'));
+        fetchTableData('departments');
         //display the result on console
     } else if (response.action === 'View Roles') {
         //function to render roles table in pg
-        console.table(fetchTableData('roles'));
+        fetchTableData('roles');
     } else if (response.action === 'View Employees') {
         //function to render employees table in pg
-        console.table(fetchTableData('employees'));
+        fetchTableData('employees');
     } else if (response.action === 'Update Employee Information') {
         //function to update employee information inside pg table
         inquirer
@@ -86,7 +129,7 @@ function menuHandler(response) {
                     name: 'emp_id'
                 }
             ])
-            .then(res => {updateEmp(res.emp_id)})
+            .then(res => { updateEmp(res.emp_id) })
     } else if (response.action === 'Add Employee') {
         //function to add entry to employee pg table
     } else if (response.action === 'Add Role') {

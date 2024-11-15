@@ -1,7 +1,7 @@
 import express from 'express';
 import pg from 'pg';
 import { QueryResult } from 'pg';
-const { pool } = pg;
+const { Pool } = pg;
 import inquirer from 'inquirer';
 import menuHandler from './input.js';
 import { connectToDb } from './connection.js';
@@ -20,6 +20,4 @@ function start() {
         .then((response) => menuHandler(response));
 }
 export default start;
-
-connectToDb;
 start;

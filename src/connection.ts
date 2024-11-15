@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import pg from 'pg';
+import { QueryResult } from 'pg';
 const { Pool } = pg;
 
 const pool = new Pool({
@@ -24,11 +25,17 @@ const connectToDb = async () => {
 };
 
 //DATA HANDLING
-
+await connectToDb();
 // Function to fetch table data
-async function fetchTableData(tableName: string): Promise<any[]> {
-  const result = await pool.query('SELECT id, name FROM $1')[tableName];
-  return result.rows;
+function fetchTableData(tableName: string): void {
+  pool.query('SELECT id, name FROM $1', [tableName], (err: Error, result: QueryResult) => {
+    if (err) {
+      console.log(err)
+      return;
+    }
+    const { rows } = result;
+    console.table(rows);
+  });;
 }
 
 export { pool, connectToDb, fetchTableData };
